@@ -7,11 +7,11 @@ export type RateLimitRule = {
 };
 
 export const RATE_LIMITS: Record<string, RateLimitRule> = {
-  login: { limit: 8, windowSeconds: 15 * 60 },
-  register: { limit: 5, windowSeconds: 60 * 60 },
-  forgotPassword: { limit: 4, windowSeconds: 60 * 60 },
-  resetPassword: { limit: 5, windowSeconds: 60 * 60 },
-  resendVerification: { limit: 3, windowSeconds: 60 * 60 },
+  login: { limit: 30, windowSeconds: 15 * 60 },
+  register: { limit: 20, windowSeconds: 60 * 60 },
+  forgotPassword: { limit: 10, windowSeconds: 60 * 60 },
+  resetPassword: { limit: 10, windowSeconds: 60 * 60 },
+  resendVerification: { limit: 10, windowSeconds: 60 * 60 },
 };
 
 export function isRateLimited(count: number, rule: RateLimitRule): boolean {
