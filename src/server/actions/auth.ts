@@ -43,6 +43,7 @@ export async function registerAction(formData: FormData) {
           email: parsed.email,
           name: parsed.name,
           passwordHash,
+          emailVerifiedAt: new Date(),
           organizationProfile: {
             create: {
               organizationName: parsed.organizationName,
@@ -61,24 +62,9 @@ export async function registerAction(formData: FormData) {
         },
       });
       await ensureUserIndicatorProgress(user.id);
-      const token = createOpaqueToken();
-      await prisma.emailVerificationToken.create({
-        data: {
-          userId: user.id,
-          tokenHash: hashToken(token),
-          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-        },
-      });
-      try {
-        await sendVerificationEmail(parsed.email, token);
-        target = `/verify-email?email=${encodeURIComponent(parsed.email)}&sent=1`;
-      } catch (error) {
-        if (error instanceof EmailError) {
-          target = `/verify-email?email=${encodeURIComponent(parsed.email)}&error=${encodeURIComponent(error.message)}`;
-        } else {
-          throw error;
-        }
-      }
+      await setSessionCookie(user.id);
+      try { await sendWelcomeEmail(parsed.email, parsed.name); } catch { /* non bloquant */ }
+      target = "/app";
     }
   } catch (error) {
     target = `/register?error=${encodeURIComponent(toPublicError(error))}`;
@@ -95,8 +81,6 @@ export async function loginAction(formData: FormData) {
     const valid = user ? await bcrypt.compare(parsed.password, user.passwordHash) : false;
     if (!user || !valid) {
       target = "/login?error=Identifiants%20invalides.";
-    } else if (!user.emailVerifiedAt) {
-      target = `/verify-email?email=${encodeURIComponent(user.email)}&error=${encodeURIComponent("Veuillez verifier votre email avant de vous connecter.")}`;
     } else {
       await ensureUserIndicatorProgress(user.id);
       await setSessionCookie(user.id);

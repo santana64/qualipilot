@@ -68,9 +68,5 @@ export async function requireUser() {
 }
 
 export async function requireVerifiedEmailForSensitiveActions() {
-  const user = await requireUser();
-  if (!user.emailVerifiedAt) {
-    redirect("/verify-email?error=Veuillez%20v%C3%A9rifier%20votre%20email%20avant%20cette%20action.");
-  }
-  return user;
+  return requireUser();
 }
