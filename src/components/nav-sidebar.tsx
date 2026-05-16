@@ -55,7 +55,7 @@ const navGroups = [
       { href: "/app/rappels", label: "Rappels", icon: Bell },
       { href: "/app/historique", label: "Historique score", icon: LineChart },
       { href: "/app/cabinet", label: "Cabinet", icon: Building2 },
-      { href: "/app/team", label: "Equipe", icon: Users },
+      { href: "/app/team", label: "Équipe", icon: Users },
       { href: "/app/billing", label: "Facturation", icon: CreditCard },
       { href: "/app/settings", label: "Réglages", icon: Settings },
       { href: "/app/account", label: "Mon compte", icon: User },
