@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "",
   },
+
+  // pdfkit charge ses polices AFM via fs.readFileSync — Vercel doit les bundler
+  outputFileTracingIncludes: {
+    "/**": ["./node_modules/pdfkit/js/data/**/*"],
+  },
 };
 
 export default nextConfig;
