@@ -105,7 +105,7 @@ export default async function BillingPage({
       {usage.isOverLimit ? (
         <Notice
           type="error"
-          message="Votre espace depasse les limites de l'offre actuelle apres changement d'abonnement. Les donnees restent consultables, mais les creations concernees sont bloquees tant que le depassement n'est pas reduit ou que l'offre n'est pas ajustee."
+          message="Votre espace dépasse les limites de l'offre actuelle. Les données restent consultables, mais les créations concernées sont bloquées tant que le dépassement n'est pas réduit ou que l'offre n'est pas ajustée."
         />
       ) : null}
 
@@ -117,7 +117,7 @@ export default async function BillingPage({
               <CreditCard className="h-5 w-5 text-brand" />
               <p className="font-bold text-slate-900">Offre actuelle</p>
             </div>
-            <p className="mt-2 text-3xl font-black text-slate-950">{usage.plan}</p>
+            <p className="mt-2 text-3xl font-black text-slate-950">{{ FREE: "Gratuit", STARTER: "Starter", PRO: "Pro", CABINET: "Cabinet" }[usage.plan] ?? usage.plan}</p>
             <p className="mt-1 text-sm text-slate-500">
               Statut : {subscription?.status ?? "actif"}{" "}
               {subscription?.currentPeriodEnd

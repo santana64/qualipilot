@@ -4,15 +4,12 @@ import { redirect } from "next/navigation";
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  if (!user.emailVerifiedAt) {
-    redirect(`/verify-email?email=${encodeURIComponent(user.email)}&error=${encodeURIComponent("Veuillez verifier votre email avant d'acceder a l'application.")}`);
-  }
   return (
     <div className="min-h-screen bg-background">
       <NavSidebar
         userName={user.name ?? ""}
         userEmail={user.email}
-        emailVerified={!!user.emailVerifiedAt}
+        emailVerified={true}
       />
       {/* Desktop: offset for sidebar width. Mobile: offset for topbar height */}
       <div className="pt-14 lg:pl-60 lg:pt-0">

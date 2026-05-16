@@ -15,32 +15,32 @@ export type OnboardingState = {
 export function getOnboardingSteps(state: OnboardingState) {
   return [
     {
-      title: "Completer le profil organisme",
-      description: "Nom, adresse, activites, statut Qualiopi et prochaine date d'audit.",
+      title: "Compléter le profil organisme",
+      description: "Nom, adresse, activités, statut Qualiopi et prochaine date d'audit.",
       href: "/app/settings",
       done: state.organizationComplete,
     },
     {
       title: "Ajouter au moins une formation",
-      description: "Programme, public, objectifs, modalites, evaluation et accessibilite.",
+      description: "Programme, public, objectifs, modalités, évaluation et accessibilité.",
       href: "/app/formations/new",
       done: state.trainingProgramsCount > 0,
     },
     {
-      title: "Centraliser les premieres preuves",
-      description: "Procedures, questionnaires, attestations, programmes ou preuves publiques.",
+      title: "Centraliser les premières preuves",
+      description: "Procédures, questionnaires, attestations, programmes ou preuves publiques.",
       href: "/app/preuves",
       done: state.evidencesCount >= 3,
     },
     {
       title: "Relier les preuves aux indicateurs RNQ",
-      description: "Chaque indicateur important doit pointer vers un element de preuve actif.",
+      description: "Chaque indicateur important doit pointer vers un élément de preuve actif.",
       href: "/app/referentiel",
       done: state.linkedEvidenceCount > 0,
     },
     {
-      title: "Generer les documents qualite de base",
-      description: "Accueil apprenant, handicap, evaluation et plan d'amelioration continue.",
+      title: "Générer les documents qualité de base",
+      description: "Accueil apprenant, handicap, évaluation et plan d'amélioration continue.",
       href: "/app/documents",
       done: state.documentsCount >= 3,
     },
@@ -64,12 +64,12 @@ export function OnboardingChecklist({ state, compact = false }: { state: Onboard
     <SectionCard>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-foreground-faint">Demarrage guide</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-foreground-faint">Démarrage guidé</p>
           <h2 className="mt-1 text-lg font-bold text-foreground">
-            {isDone ? "Espace qualite initialise" : "Votre prochain meilleur pas"}
+            {isDone ? "Espace qualité initialisé" : "Votre prochain meilleur pas"}
           </h2>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-foreground-muted">
-            {completed}/{steps.length} etapes terminees. Objectif : obtenir un dossier RNQ exploitable avant de chercher
+            {completed}/{steps.length} étapes terminées. Objectif : obtenir un dossier RNQ exploitable avant de chercher
             la perfection.
           </p>
         </div>

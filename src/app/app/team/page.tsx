@@ -6,9 +6,15 @@ import { requireWorkspacePermission } from "@/server/rbac";
 
 const roleLabels: Record<string, string> = {
   ADMIN: "Administrateur",
-  QUALITY_MANAGER: "Responsable qualite",
+  QUALITY_MANAGER: "Responsable qualité",
   TRAINER: "Formateur",
   VIEWER: "Lecture seule",
+};
+
+const statusLabels: Record<string, string> = {
+  ACTIVE: "Actif",
+  INVITED: "Invité",
+  DISABLED: "Désactivé",
 };
 
 export default async function TeamPage({
@@ -26,8 +32,8 @@ export default async function TeamPage({
   return (
     <main className="grid gap-8">
       <PageHeader
-        title="Equipe"
-        description="Invitez un responsable qualite, un formateur ou un lecteur auditeur interne dans votre espace."
+        title="Équipe"
+        description="Invitez un responsable qualité, un formateur ou un lecteur auditeur interne dans votre espace."
       />
       <Notice message={params.error} type="error" />
       <Notice message={params.success} type="success" />
@@ -45,7 +51,7 @@ export default async function TeamPage({
             <Field label="Nom">
               <input className={inputClass} name="name" />
             </Field>
-            <Field label="Role">
+            <Field label="Rôle">
               <select className={inputClass} name="role" defaultValue="QUALITY_MANAGER">
                 {Object.entries(roleLabels).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -63,7 +69,7 @@ export default async function TeamPage({
           <div className="mt-4 grid gap-3">
             {members.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border p-5 text-sm text-foreground-muted">
-                Aucun membre invite pour le moment.
+                Aucun membre invité pour le moment.
               </p>
             ) : null}
             {members.map((member) => (
@@ -76,12 +82,12 @@ export default async function TeamPage({
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge tone={member.status === "ACTIVE" ? "green" : member.status === "INVITED" ? "amber" : "slate"}>
-                    {member.status}
+                    {statusLabels[member.status] ?? member.status}
                   </Badge>
                   {member.status !== "DISABLED" ? (
                     <form action={disableTeamMemberAction}>
                       <input type="hidden" name="id" value={member.id} />
-                      <SubmitButton variant="secondary" size="sm">Desactiver</SubmitButton>
+                      <SubmitButton variant="secondary" size="sm">Désactiver</SubmitButton>
                     </form>
                   ) : null}
                 </div>

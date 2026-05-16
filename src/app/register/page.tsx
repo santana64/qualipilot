@@ -72,9 +72,9 @@ export default async function RegisterPage({
 
       <p className="mt-5 text-center text-xs text-foreground-faint">
         En créant un compte, vous acceptez nos{" "}
-        <Link className="underline hover:text-foreground-muted" href="/cgu">conditions d&apos;utilisation</Link>
+        <Link className="underline hover:text-foreground-muted" href="/conditions-generales">conditions d&apos;utilisation</Link>
         {" "}et notre{" "}
-        <Link className="underline hover:text-foreground-muted" href="/privacy">politique de confidentialité</Link>.
+        <Link className="underline hover:text-foreground-muted" href="/confidentialite">politique de confidentialité</Link>.
       </p>
 
       <div className="mt-5 text-center text-sm">
