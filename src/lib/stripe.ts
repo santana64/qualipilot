@@ -8,8 +8,8 @@ export function getStripeClient() {
   return new Stripe(process.env.STRIPE_SECRET_KEY);
 }
 
-export function getPriceId(plan: "STARTER" | "PRO" | "CABINET") {
-  const envKey = `STRIPE_PRICE_${plan}` as const;
+export function getPriceId(plan: "STARTER" | "PRO" | "CABINET", period: "monthly" | "yearly" = "monthly") {
+  const envKey = `STRIPE_PRICE_${plan}_${period.toUpperCase()}`;
   const priceId = process.env[envKey];
   if (!priceId) throw new BillingError("Stripe n'est pas configuré en local.");
   return priceId;

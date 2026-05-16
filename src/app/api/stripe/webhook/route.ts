@@ -5,9 +5,10 @@ import { flagSubscriptionOverLimit } from "@/server/billing";
 
 function mapPriceToPlan(priceId?: string | null) {
   if (!priceId) return null;
-  if (priceId === process.env.STRIPE_PRICE_STARTER) return "STARTER";
-  if (priceId === process.env.STRIPE_PRICE_PRO) return "PRO";
-  if (priceId === process.env.STRIPE_PRICE_CABINET) return "CABINET";
+  const e = process.env;
+  if (priceId === e.STRIPE_PRICE_STARTER_MONTHLY || priceId === e.STRIPE_PRICE_STARTER_YEARLY) return "STARTER";
+  if (priceId === e.STRIPE_PRICE_PRO_MONTHLY || priceId === e.STRIPE_PRICE_PRO_YEARLY) return "PRO";
+  if (priceId === e.STRIPE_PRICE_CABINET_MONTHLY || priceId === e.STRIPE_PRICE_CABINET_YEARLY) return "CABINET";
   return null;
 }
 

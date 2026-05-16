@@ -9,13 +9,14 @@ import { requireWorkspacePermission } from "@/server/rbac";
 
 const checkoutSchema = z.object({
   plan: z.enum(["STARTER", "PRO", "CABINET"]),
+  period: z.enum(["monthly", "yearly"]).default("monthly"),
 });
 
 export async function createCheckoutSessionAction(formData: FormData) {
   const workspace = await requireWorkspacePermission("manageBilling");
   let target = "/app/billing";
   try {
-    const { plan } = checkoutSchema.parse(Object.fromEntries(formData));
+    const { plan, period } = checkoutSchema.parse(Object.fromEntries(formData));
     const stripe = getStripeClient();
     const subscription = await prisma.subscription.upsert({
       where: { userId: workspace.workspaceUserId },
@@ -39,7 +40,7 @@ export async function createCheckoutSessionAction(formData: FormData) {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
-      line_items: [{ price: getPriceId(plan), quantity: 1 }],
+      line_items: [{ price: getPriceId(plan, period), quantity: 1 }],
       success_url: `${appUrl}/app/billing?success=Abonnement%20mis%20%C3%A0%20jour.`,
       cancel_url: `${appUrl}/app/billing?error=Paiement%20annul%C3%A9.`,
       metadata: {
