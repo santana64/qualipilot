@@ -1,0 +1,557 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum QualiopiStatus {
+  NOT_CERTIFIED
+  INITIAL_AUDIT_PLANNED
+  CERTIFIED
+  SURVEILLANCE_PLANNED
+  RENEWAL_PLANNED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IndicatorStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  NEEDS_REVIEW
+  READY
+  VALIDATED
+  NOT_APPLICABLE
+}
+
+enum TrainingStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EvidenceType {
+  PROCEDURE
+  PROGRAM
+  ATTENDANCE_SHEET
+  SATISFACTION_SURVEY
+  EVALUATION_RESULT
+  TRAINER_CV
+  ACCESSIBILITY_DOCUMENT
+  CONTRACT
+  FUNDER_DOCUMENT
+  IMPROVEMENT_ACTION
+  PUBLIC_INFORMATION_PROOF
+  SUBCONTRACTOR_PROOF
+  OTHER
+}
+
+enum EvidenceStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  TO_REVIEW
+  ARCHIVED
+}
+
+enum ActionPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ActionStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum GeneratedDocumentType {
+  LEARNER_WELCOME_PROCEDURE
+  ACCESSIBILITY_PROCEDURE
+  EVALUATION_PROCEDURE
+  TRAINING_PROGRAM_TEMPLATE
+  SATISFACTION_QUESTIONNAIRE
+  ATTENDANCE_SHEET_TEMPLATE
+  CONTINUOUS_IMPROVEMENT_PLAN
+  COMPLAINT_MANAGEMENT_PROCEDURE
+  AUDIT_SUMMARY
+  FULL_AUDIT_FILE
+}
+
+enum AuditType {
+  INITIAL
+  SURVEILLANCE
+  RENEWAL
+  INTERNAL
+}
+
+enum AuditStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PRO
+  CABINET
+}
+
+enum ReminderType {
+  ACTION_DUE
+  AUDIT_PREPARATION
+  EVIDENCE_EXPIRY
+}
+
+enum ReminderStatus {
+  ACTIVE
+  PAUSED
+  SENT
+  CANCELLED
+  FAILED
+}
+
+enum CabinetClientStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  QUALITY_MANAGER
+  TRAINER
+  VIEWER
+}
+
+enum TeamMemberStatus {
+  INVITED
+  ACTIVE
+  DISABLED
+}
+
+model User {
+  id                      String                   @id @default(cuid())
+  email                   String                   @unique
+  name                    String?
+  passwordHash            String
+  emailVerifiedAt         DateTime?
+  reminderEmailsUnsubscribedAt DateTime?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  organizationProfile     OrganizationProfile?
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  indicatorProgress       IndicatorProgress[]
+  trainingPrograms        TrainingProgram[]
+  evidences               Evidence[]
+  actionPlanItems         ActionPlanItem[]
+  generatedDocuments      GeneratedDocument[]
+  auditRecords            AuditRecord[]
+  subscription            Subscription?
+  reminders               EmailReminder[]
+  cabinetClients          CabinetClient[]
+  ownedTeamMembers        TeamMember[]             @relation("TeamOwner")
+  joinedTeamMemberships   TeamMember[]             @relation("TeamMemberUser")
+  readinessSnapshots      ReadinessSnapshot[]
+  auditorShareLinks       AuditorShareLink[]
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model OrganizationProfile {
+  id                    String         @id @default(cuid())
+  userId                String         @unique
+  organizationName      String
+  legalForm             String?
+  siret                 String?
+  siren                 String?
+  ndaNumber             String?
+  address               String
+  postalCode            String
+  city                  String
+  email                 String?
+  phone                 String?
+  website               String?
+  contactPerson         String?
+  activityTypes         String[]
+  qualiopiStatus        QualiopiStatus @default(NOT_CERTIFIED)
+  certifierName         String?
+  certificateDate       DateTime?
+  certificateExpiryDate DateTime?
+  nextAuditDate         DateTime?
+  defaultSignature      String?
+  documentFooterText    String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RnqCriterion {
+  id          String         @id @default(cuid())
+  number      Int            @unique
+  title       String
+  description String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  indicators  RnqIndicator[]
+}
+
+model RnqIndicator {
+  id                String              @id @default(cuid())
+  number            Int                 @unique
+  criterionId       String
+  title             String
+  shortDescription  String
+  expectedLevel     String
+  evidenceExamples  String[]
+  applicableTo      String[]
+  riskLevel         RiskLevel
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  criterion         RnqCriterion        @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  progress          IndicatorProgress[]
+  evidenceLinks     EvidenceIndicator[]
+  actionPlanItems   ActionPlanItem[]
+  generatedDocument GeneratedDocument[]
+}
+
+model IndicatorProgress {
+  id              String          @id @default(cuid())
+  userId          String
+  clientId        String?
+  indicatorId     String
+  status          IndicatorStatus @default(NOT_STARTED)
+  readinessScore  Int             @default(0)
+  notes           String?
+  lastReviewedAt  DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client          CabinetClient?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  indicator       RnqIndicator    @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, indicatorId, clientId])
+  @@index([userId])
+  @@index([clientId])
+}
+
+model TrainingProgram {
+  id                    String                    @id @default(cuid())
+  userId                String
+  clientId              String?
+  title                 String
+  category              String?
+  publicTarget          String
+  prerequisites         String?
+  objectives            String
+  duration              String
+  accessDelay           String?
+  priceCents            Int?
+  modalities            String
+  teachingMethods       String
+  evaluationMethods     String
+  accessibilityInfo     String?
+  contactInfo           String?
+  resultIndicators      String?
+  status                TrainingStatus            @default(DRAFT)
+  notes                 String?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  user                  User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client                CabinetClient?            @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  evidenceLinks         EvidenceTrainingProgram[]
+  actionPlanItems       ActionPlanItem[]
+  generatedDocument     GeneratedDocument[]
+
+  @@index([userId])
+  @@index([clientId])
+}
+
+model Evidence {
+  id                   String                    @id @default(cuid())
+  userId               String
+  clientId             String?
+  title                String
+  type                 EvidenceType
+  description          String?
+  fileUrl              String?
+  fileStorageKey       String?
+  fileName             String?
+  fileMimeType         String?
+  fileSizeBytes        Int?
+  fileUploadedAt       DateTime?
+  externalUrl          String?
+  validityDate         DateTime?
+  responsible          String?
+  status               EvidenceStatus            @default(DRAFT)
+  notes                String?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  user                 User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client               CabinetClient?            @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  indicatorLinks       EvidenceIndicator[]
+  trainingProgramLinks EvidenceTrainingProgram[]
+  actionPlanItems      ActionPlanItem[]
+  reminders            EmailReminder[]
+
+  @@index([userId])
+  @@index([clientId])
+}
+
+model EvidenceIndicator {
+  id          String       @id @default(cuid())
+  evidenceId  String
+  indicatorId String
+  evidence    Evidence     @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  indicator   RnqIndicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+
+  @@unique([evidenceId, indicatorId])
+  @@index([indicatorId])
+}
+
+model EvidenceTrainingProgram {
+  id                String          @id @default(cuid())
+  evidenceId        String
+  trainingProgramId String
+  evidence          Evidence        @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  trainingProgram   TrainingProgram @relation(fields: [trainingProgramId], references: [id], onDelete: Cascade)
+
+  @@unique([evidenceId, trainingProgramId])
+  @@index([trainingProgramId])
+}
+
+model ActionPlanItem {
+  id                String           @id @default(cuid())
+  userId            String
+  clientId          String?
+  title             String
+  description       String?
+  priority          ActionPriority   @default(MEDIUM)
+  status            ActionStatus     @default(TODO)
+  dueDate           DateTime?
+  responsible       String?
+  indicatorId       String?
+  evidenceId        String?
+  trainingProgramId String?
+  completionNote    String?
+  completedAt       DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client            CabinetClient?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  indicator         RnqIndicator?    @relation(fields: [indicatorId], references: [id], onDelete: SetNull)
+  evidence          Evidence?        @relation(fields: [evidenceId], references: [id], onDelete: SetNull)
+  trainingProgram   TrainingProgram? @relation(fields: [trainingProgramId], references: [id], onDelete: SetNull)
+  reminders         EmailReminder[]
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([indicatorId])
+}
+
+model GeneratedDocument {
+  id                       String                @id @default(cuid())
+  userId                   String
+  clientId                 String?
+  type                     GeneratedDocumentType
+  title                    String
+  contentHtml              String
+  contentText              String
+  relatedIndicatorId       String?
+  relatedTrainingProgramId String?
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+  user                     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client                   CabinetClient?        @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  relatedIndicator         RnqIndicator?         @relation(fields: [relatedIndicatorId], references: [id], onDelete: SetNull)
+  relatedTrainingProgram   TrainingProgram?      @relation(fields: [relatedTrainingProgramId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([clientId])
+}
+
+model AuditRecord {
+  id             String      @id @default(cuid())
+  userId         String
+  clientId       String?
+  type           AuditType
+  scheduledDate  DateTime
+  certifierName  String?
+  status         AuditStatus @default(PLANNED)
+  readinessScore Int         @default(0)
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client         CabinetClient? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  reminders      EmailReminder[]
+
+  @@index([userId])
+  @@index([clientId])
+}
+
+model Subscription {
+  id                   String           @id @default(cuid())
+  userId               String           @unique
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  plan                 SubscriptionPlan @default(FREE)
+  status               String           @default("active")
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RateLimitEvent {
+  id        String   @id @default(cuid())
+  key       String
+  action    String
+  createdAt DateTime @default(now())
+
+  @@index([key, action, createdAt])
+}
+
+model TeamMember {
+  id            String           @id @default(cuid())
+  ownerUserId   String
+  memberUserId  String?
+  email         String
+  name          String?
+  role          TeamRole
+  status        TeamMemberStatus @default(INVITED)
+  inviteTokenHash String?        @unique
+  inviteExpiresAt DateTime?
+  acceptedAt    DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  owner         User             @relation("TeamOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  memberUser    User?            @relation("TeamMemberUser", fields: [memberUserId], references: [id], onDelete: SetNull)
+
+  @@unique([ownerUserId, email])
+  @@index([ownerUserId])
+  @@index([memberUserId])
+}
+
+model CabinetClient {
+  id               String              @id @default(cuid())
+  userId           String
+  organizationName String
+  contactName      String?
+  email            String?
+  phone            String?
+  siret            String?
+  ndaNumber        String?
+  address          String?
+  notes            String?
+  status           CabinetClientStatus @default(ACTIVE)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trainingPrograms TrainingProgram[]
+  indicatorProgress IndicatorProgress[]
+  evidences        Evidence[]
+  actionPlanItems  ActionPlanItem[]
+  generatedDocuments GeneratedDocument[]
+  auditRecords     AuditRecord[]
+  reminders        EmailReminder[]
+  readinessSnapshots ReadinessSnapshot[]
+  auditorShareLinks AuditorShareLink[]
+
+  @@index([userId])
+}
+
+model EmailReminder {
+  id               String          @id @default(cuid())
+  userId           String
+  clientId         String?
+  type             ReminderType
+  subject          String
+  message          String
+  scheduledFor     DateTime
+  sentAt           DateTime?
+  status           ReminderStatus  @default(ACTIVE)
+  actionPlanItemId String?
+  evidenceId       String?
+  auditRecordId    String?
+  lastError        String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client           CabinetClient?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  actionPlanItem   ActionPlanItem? @relation(fields: [actionPlanItemId], references: [id], onDelete: Cascade)
+  evidence         Evidence?       @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  auditRecord      AuditRecord?    @relation(fields: [auditRecordId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, scheduledFor])
+  @@index([clientId])
+}
+
+model ReadinessSnapshot {
+  id                   String   @id @default(cuid())
+  userId               String
+  clientId             String?
+  globalReadinessScore Int
+  indicatorsReady      Int
+  indicatorsIncomplete Int
+  missingEvidenceCount Int
+  overdueActionsCount  Int
+  capturedAt           DateTime @default(now())
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client               CabinetClient? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@index([userId, capturedAt])
+  @@index([clientId, capturedAt])
+}
+
+model AuditorShareLink {
+  id            String    @id @default(cuid())
+  userId        String
+  clientId      String?
+  tokenHash     String    @unique
+  title         String
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  lastViewedAt  DateTime?
+  createdAt     DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client        CabinetClient? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([clientId])
+}

@@ -1,26 +1,231 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────
+   Design System — QualiPilot
+   Inspired by: Anthropic, ElevenLabs, Cursor
+   Philosophy: warm-achromatic + one green accent
+───────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── Backgrounds ── */
+  --background:      #faf9f5;   /* Anthropic ivory — NOT pure white */
+  --surface:         #ffffff;
+  --surface-subtle:  #f3f0ea;   /* slightly warmer than bg for secondary surfaces */
+  --surface-raised:  #edeae3;   /* fieldset, code, elevated areas */
+
+  /* ── Text ── */
+  --foreground:      #141413;   /* Anthropic near-black — ink */
+  --foreground-muted:#6f6e69;   /* warm stone — secondary text */
+  --foreground-faint:#a8a49c;   /* tertiary / placeholder */
+
+  /* ── Borders ── */
+  --border:          #e8e4dc;   /* warm light gray */
+  --border-strong:   #c9c4bb;   /* emphasis borders */
+
+  /* ── Brand (primary interactive = near-black) ── */
+  /* The "brand" is the text color. Like Anthropic, CTAs are near-black. */
+  --brand:           #141413;
+  --brand-hover:     #2d2d2b;
+  --brand-subtle:    #f0eeea;   /* hover tint on cards */
+
+  /* ── Accent = audit green (used ONLY for positive/ready states) ── */
+  --accent:          #15803d;
+  --accent-hover:    #166534;
+  --accent-light:    #f0fdf4;
+  --accent-border:   #bbf7d0;
+
+  /* ── Semantic ── */
+  --success-fg:      #15803d;
+  --success-bg:      #f0fdf4;
+  --success-border:  #bbf7d0;
+
+  --warning-fg:      #92400e;
+  --warning-bg:      #fffbeb;
+  --warning-border:  #fde68a;
+
+  --danger-fg:       #991b1b;
+  --danger-bg:       #fff1f2;
+  --danger-border:   #fecaca;
+
+  --info-fg:         #1e40af;
+  --info-bg:         #eff6ff;
+  --info-border:     #bfdbfe;
+
+  /* ── Navigation ── */
+  --nav-bg:          #111110;   /* near-void warm charcoal */
+  --nav-border:      #1d1d1b;
+  --nav-text:        #a8a49c;
+  --nav-text-active: #faf9f5;   /* ivory — matches page background */
+  --nav-active-bg:   rgba(250, 249, 245, 0.1);
+  --nav-hover-bg:    rgba(250, 249, 245, 0.05);
+}
+
+:root[data-theme="dark"] {
+  --background:      #111110;
+  --surface:         #1b1b19;
+  --surface-subtle:  #24231f;
+  --surface-raised:  #302f2a;
+
+  --foreground:      #faf9f5;
+  --foreground-muted:#c9c4bb;
+  --foreground-faint:#8f8b83;
+
+  --border:          #34332e;
+  --border-strong:   #555149;
+
+  --brand:           #faf9f5;
+  --brand-hover:     #edeae3;
+  --brand-subtle:    #24231f;
+
+  --accent:          #22c55e;
+  --accent-hover:    #16a34a;
+  --accent-light:    #052e16;
+  --accent-border:   #166534;
+
+  --success-fg:      #86efac;
+  --success-bg:      #052e16;
+  --success-border:  #166534;
+
+  --warning-fg:      #fde68a;
+  --warning-bg:      #451a03;
+  --warning-border:  #92400e;
+
+  --danger-fg:       #fecaca;
+  --danger-bg:       #450a0a;
+  --danger-border:   #991b1b;
+
+  --info-fg:         #bfdbfe;
+  --info-bg:         #172554;
+  --info-border:     #1d4ed8;
+
+  --nav-bg:          #080807;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Colors */
+  --color-background:       var(--background);
+  --color-surface:          var(--surface);
+  --color-surface-subtle:   var(--surface-subtle);
+  --color-surface-raised:   var(--surface-raised);
+  --color-foreground:       var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-faint: var(--foreground-faint);
+  --color-border:           var(--border);
+  --color-border-strong:    var(--border-strong);
+
+  --color-brand:         var(--brand);
+  --color-brand-hover:   var(--brand-hover);
+  --color-brand-subtle:  var(--brand-subtle);
+
+  --color-accent:        var(--accent);
+  --color-accent-hover:  var(--accent-hover);
+  --color-accent-light:  var(--accent-light);
+  --color-accent-border: var(--accent-border);
+
+  --color-nav-bg:        var(--nav-bg);
+  --color-nav-border:    var(--nav-border);
+
+  /* Shadows */
+  --shadow-card:   0 0 0 1px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-raised: 0 0 0 1px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.07);
+  --shadow-float:  0 0 0 1px rgba(0,0,0,0.10), 0 8px 24px rgba(0,0,0,0.10);
+
+  /* Font */
+  --font-sans: var(--font-inter, "Inter", system-ui, -apple-system, sans-serif);
+  --font-mono: "Geist Mono", "Berkeley Mono", ui-monospace, monospace;
+
+  /* Radii */
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  18px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+a {
+  text-decoration: none;
+}
+
+input, textarea, select {
+  font: inherit;
+}
+
+/* ─── Document print ─── */
+.document-print h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-bottom: 1rem;
+}
+
+.document-print h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.document-print p,
+.document-print li {
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.document-print table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.document-print th,
+.document-print td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.document-print th {
+  background: var(--surface-subtle);
+  font-weight: 600;
+}
+
+.document-print .disclaimer {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  color: var(--foreground-muted);
+  font-size: 0.8rem;
+}
+
+.document-print .footer {
+  margin-top: 1rem;
+  color: var(--foreground-faint);
+  font-size: 0.8rem;
+}
+
+/* ─── Print ─── */
+@media print {
+  body { background: #fff; }
+  .no-print { display: none !important; }
+  .print-surface { box-shadow: none !important; border: none !important; }
 }
