@@ -11,8 +11,8 @@ const plans = [
   {
     id: "FREE" as const,
     name: "Free",
-    price: "0 €",
-    period: "",
+    monthly: { price: "0 €", period: "" },
+    yearly: { price: "0 €", period: "" },
     description: "Pour explorer le référentiel et démarrer.",
     highlight: false,
     target: "Formateur débutant",
@@ -20,8 +20,8 @@ const plans = [
   {
     id: "STARTER" as const,
     name: "Starter",
-    price: "49 €",
-    period: "/mois",
+    monthly: { price: "49 €", period: "/mois" },
+    yearly: { price: "490 €", period: "/an" },
     description: "Pour préparer un premier audit sérieusement.",
     highlight: false,
     target: "OF en préparation initiale",
@@ -29,8 +29,8 @@ const plans = [
   {
     id: "PRO" as const,
     name: "Pro",
-    price: "89 €",
-    period: "/mois",
+    monthly: { price: "89 €", period: "/mois" },
+    yearly: { price: "890 €", period: "/an" },
     description: "Pour les OFs actifs en maintenance continue.",
     highlight: true,
     target: "OF certifié en surveillance",
@@ -38,13 +38,13 @@ const plans = [
   {
     id: "CABINET" as const,
     name: "Cabinet",
-    price: "149 €",
-    period: "/mois",
+    monthly: { price: "149 €", period: "/mois" },
+    yearly: { price: "1 490 €", period: "/an" },
     description: "Pour gérer plusieurs organismes en portefeuille.",
     highlight: false,
     target: "Consultant qualité formation",
   },
-] as const;
+];
 
 function limitLabel(value: number | "unlimited") {
   return value === "unlimited" ? "Illimité" : String(value);
@@ -74,6 +74,7 @@ export default async function BillingPage({
 }) {
   const workspace = await requireWorkspacePermission("manageBilling");
   const params = (await searchParams) ?? {};
+  const billing = (params.billing as string) === "yearly" ? "yearly" : "monthly";
   const usage = await getUsage(workspace.workspaceUserId);
   const subscription = await prisma.subscription.findUnique({ where: { userId: workspace.workspaceUserId } });
 
@@ -85,6 +86,22 @@ export default async function BillingPage({
       />
       <Notice message={params.error} type="error" />
       <Notice message={params.success} type="success" />
+
+      {/* Toggle mensuel / annuel */}
+      <div className="flex items-center gap-3">
+        <a
+          href="?billing=monthly"
+          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${billing === "monthly" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+        >
+          Mensuel
+        </a>
+        <a
+          href="?billing=yearly"
+          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${billing === "yearly" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+        >
+          Annuel <span className="ml-1 text-xs text-emerald-600 font-semibold">−2 mois offerts</span>
+        </a>
+      </div>
       {usage.isOverLimit ? (
         <Notice
           type="error"
@@ -133,9 +150,10 @@ export default async function BillingPage({
       <section>
         <h2 className="mb-5 font-bold text-slate-900">Changer d&apos;offre</h2>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {plans.map(({ id, name, price, period, description, highlight, target }) => {
+          {plans.map(({ id, name, monthly, yearly, description, highlight, target }) => {
             const limits = getPlanLimits(id);
             const isCurrent = usage.plan === id;
+            const { price, period } = billing === "yearly" ? yearly : monthly;
             return (
               <article
                 key={id}
@@ -177,9 +195,7 @@ export default async function BillingPage({
                     `Export audit : ${limits.fullAuditExport ? "Oui" : "Non"}`,
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-2 text-xs">
-                      <CheckCircle2
-                        className="h-3.5 w-3.5 shrink-0 text-accent"
-                      />
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-accent" />
                       <span className={highlight ? "text-white/70" : "text-foreground-muted"}>{item}</span>
                     </li>
                   ))}
@@ -187,6 +203,7 @@ export default async function BillingPage({
                 {id !== "FREE" ? (
                   <form action={createCheckoutSessionAction} className="mt-5">
                     <input type="hidden" name="plan" value={id} />
+                    <input type="hidden" name="period" value={billing} />
                     <SubmitButton variant={highlight ? "secondary" : "primary"}>
                       {isCurrent ? "Réactiver via Stripe" : `Choisir ${name}`}
                     </SubmitButton>
