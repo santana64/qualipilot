@@ -62,6 +62,7 @@ export async function getWorkspaceData(userId: string, options?: { clientId?: st
         client: true,
         indicatorLinks: { include: { indicator: true } },
         trainingProgramLinks: { include: { trainingProgram: true } },
+        aiAnalyses: { orderBy: { createdAt: "desc" }, take: 1 },
       },
     }),
     prisma.actionPlanItem.findMany({

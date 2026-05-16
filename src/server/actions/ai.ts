@@ -28,16 +28,55 @@ export async function generateAiAuditAdviceAction() {
     }
     await assertCanGenerateDocument(workspace.workspaceUserId);
     const data = await getWorkspaceData(workspace.workspaceUserId);
+    const evidenceByIndicator = new Map<number, string[]>();
+    for (const evidence of data.evidences) {
+      for (const link of evidence.indicatorLinks) {
+        const current = evidenceByIndicator.get(link.indicator.number) ?? [];
+        current.push(`${evidence.title} (${evidence.status})`);
+        evidenceByIndicator.set(link.indicator.number, current);
+      }
+    }
+    const actionsByIndicator = new Map<number, string[]>();
+    for (const action of data.actions) {
+      if (!action.indicator?.number) continue;
+      const current = actionsByIndicator.get(action.indicator.number) ?? [];
+      current.push(`${action.title} - ${action.status}${action.dueDate ? ` - echeance ${action.dueDate.toISOString().slice(0, 10)}` : ""}`);
+      actionsByIndicator.set(action.indicator.number, current);
+    }
+    const indicatorContext = data.indicatorRows
+      .map((indicator) => {
+        const criterion = data.criteria.find((item) => item.number === indicator.criterionNumber);
+        const evidenceList = evidenceByIndicator.get(indicator.number) ?? [];
+        const actionList = actionsByIndicator.get(indicator.number) ?? [];
+        return [
+          `Indicateur ${indicator.number} / Critere ${indicator.criterionNumber} - ${criterion?.title ?? "critere non renseigne"}`,
+          `Titre: ${indicator.title}`,
+          `Risque: ${indicator.riskLevel}; statut: ${indicator.status}; score: ${indicator.readinessScore}%; preuves actives: ${indicator.evidenceCount}; actions ouvertes: ${indicator.actionCount}`,
+          `Preuves liees: ${evidenceList.slice(0, 5).join(", ") || "aucune"}`,
+          `Actions liees: ${actionList.slice(0, 5).join(", ") || "aucune"}`,
+        ].join(" | ");
+      })
+      .join("\n");
+    const incompleteTrainingContext = data.trainingCompleteness
+      .filter((item) => !item.completeness.isComplete)
+      .map((item) => `${item.program.title}: score ${item.completeness.score}%, champs manquants: ${item.completeness.missingFields.join(", ")}`)
+      .join("\n");
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const prompt = [
-      "Tu es un assistant qualite prudent pour un organisme de formation francais.",
-      "Ne garantis jamais la certification Qualiopi. Utilise une formulation prudente.",
-      "Produis une priorisation concrete en francais: risques, preuves a produire, actions prioritaires.",
+      "Tu es un assistant qualite Qualiopi/RNQ prudent pour un organisme de formation francais.",
+      "Tu dois analyser les donnees RNQ reelles de l'utilisateur, pas produire du conseil generique.",
+      "Ne garantis jamais la certification Qualiopi. Utilise une formulation prudente et renvoie vers une validation selon le guide RNQ et le certificateur.",
+      "Produis une priorisation concrete en francais avec cette structure:",
+      "1. Resume executif en 5 lignes maximum.",
+      "2. Top 10 des indicateurs a traiter, classes par criticite puis absence de preuve.",
+      "3. Pour chaque indicateur: risque, pourquoi c'est fragile, preuve exacte a produire, action recommandee, responsable suggere, delai conseille.",
+      "4. Formations a completer.",
+      "5. Questions a poser au certificateur si necessaire.",
       `Organisation: ${data.organization?.organizationName ?? "profil incomplet"}`,
       `Score global: ${data.globalReadinessScore}%.`,
-      `Preuves manquantes: ${data.missingEvidence.slice(0, 12).map((item) => `Indicateur ${item.number} - ${item.title}`).join("; ") || "aucune"}.`,
-      `Actions en retard: ${data.overdueActions.slice(0, 8).map((item) => item.title).join("; ") || "aucune"}.`,
-      `Formations incompletes: ${data.trainingCompleteness.filter((item) => !item.completeness.isComplete).map((item) => item.program.title).join("; ") || "aucune"}.`,
+      `Indicateurs RNQ detailles:\n${indicatorContext}`,
+      `Actions en retard: ${data.overdueActions.slice(0, 12).map((item) => item.title).join("; ") || "aucune"}.`,
+      `Formations incompletes:\n${incompleteTrainingContext || "aucune"}.`,
       `Disclaimer obligatoire: ${QUALIPILOT_DISCLAIMER}`,
     ].join("\n");
 

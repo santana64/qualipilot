@@ -5,13 +5,19 @@ import { prisma } from "@/lib/db";
 import { ensureUserIndicatorProgress } from "@/server/referential";
 
 // Only available outside production
-export async function POST() {
+export async function POST(request: Request) {
   if (process.env.NODE_ENV === "production") {
     return new NextResponse(null, { status: 404 });
   }
 
-  const email = "test@qualipilot.test";
+  const body = await request.json().catch(() => ({})) as { email?: string; plan?: string };
+  const email = typeof body.email === "string" && body.email.includes("@")
+    ? body.email.toLowerCase()
+    : `test-${crypto.randomUUID()}@qualipilot.test`;
   const password = "TestPassword123!";
+  const plan = ["FREE", "STARTER", "PRO", "CABINET"].includes(body.plan ?? "")
+    ? body.plan as "FREE" | "STARTER" | "PRO" | "CABINET"
+    : "PRO";
 
   await prisma.user.deleteMany({ where: { email } });
 
@@ -33,7 +39,7 @@ export async function POST() {
         },
       },
       subscription: {
-        create: { plan: "PRO", status: "active" },
+        create: { plan, status: "active" },
       },
     },
   });

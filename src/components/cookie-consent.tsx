@@ -9,8 +9,12 @@ export function CookieConsent() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(COOKIE_KEY);
-    if (!stored) setVisible(true);
+    const timeout = window.setTimeout(() => {
+      const stored = localStorage.getItem(COOKIE_KEY);
+      if (!stored) setVisible(true);
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
   }, []);
 
   function accept() {

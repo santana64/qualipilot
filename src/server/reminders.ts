@@ -23,8 +23,8 @@ export async function scheduleActionReminder(input: {
       clientId: input.clientId ?? null,
       actionPlanItemId: input.actionPlanItemId,
       type: "ACTION_DUE",
-      subject: `Action qualité à traiter : ${input.title}`,
-      message: `L'action "${input.title}" arrive à échéance le ${formatFrenchDate(input.dueDate)}.`,
+      subject: `Action qualite a traiter : ${input.title}`,
+      message: `L'action "${input.title}" arrive a echeance le ${formatFrenchDate(input.dueDate)}.`,
       scheduledFor: scheduleBefore(input.dueDate, 3),
     },
   });
@@ -44,8 +44,8 @@ export async function scheduleEvidenceExpiryReminder(input: {
       clientId: input.clientId ?? null,
       evidenceId: input.evidenceId,
       type: "EVIDENCE_EXPIRY",
-      subject: `Preuve à vérifier : ${input.title}`,
-      message: `La preuve "${input.title}" arrive à échéance le ${formatFrenchDate(input.validityDate)}.`,
+      subject: `Preuve a verifier : ${input.title}`,
+      message: `La preuve "${input.title}" arrive a echeance le ${formatFrenchDate(input.validityDate)}.`,
       scheduledFor: scheduleBefore(input.validityDate, 14),
     },
   });
@@ -64,8 +64,8 @@ export async function scheduleAuditReminder(input: {
       clientId: input.clientId ?? null,
       auditRecordId: input.auditRecordId,
       type: "AUDIT_PREPARATION",
-      subject: `Audit ${input.type.toLowerCase()} à préparer`,
-      message: `Votre audit ${input.type.toLowerCase()} est prévu le ${formatFrenchDate(input.scheduledDate)}. Vérifiez le dossier préparatoire, les preuves critiques et les actions en retard.`,
+      subject: `Audit ${input.type.toLowerCase()} a preparer`,
+      message: `Votre audit ${input.type.toLowerCase()} est prevu le ${formatFrenchDate(input.scheduledDate)}. Verifiez le dossier preparatoire, les preuves critiques et les actions en retard.`,
       scheduledFor: scheduleBefore(input.scheduledDate, 30),
     },
   });

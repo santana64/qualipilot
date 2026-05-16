@@ -1,5 +1,16 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { seedAndAuthenticate } from "./helpers/auth";
+
+async function fillMinimalTraining(page: Page, title: string) {
+  await page.getByLabel(/intitul|titre/i).fill(title);
+  await page.getByRole("textbox", { name: /^cat/i }).fill("Securite");
+  await page.getByLabel(/public/i).fill("Tout public");
+  await page.getByLabel(/objectifs/i).fill("Maitriser les objectifs operationnels de la formation.");
+  await page.getByLabel(/dur/i).fill("7h");
+  await page.getByLabel(/modalit/i).fill("Presentiel");
+  await page.getByLabel(/m.+thodes p.+dagogiques|methodes pedagogiques/i).fill("Apports, exercices et cas pratiques.");
+  await page.getByLabel(/m.+thodes d.+valuation|methodes d.evaluation/i).fill("Quiz et mise en situation.");
+}
 
 test.describe("Formations", () => {
   test.beforeEach(async ({ context }) => {
@@ -8,7 +19,7 @@ test.describe("Formations", () => {
 
   test("la page formations s'affiche", async ({ page }) => {
     await page.goto("/app/formations");
-    await expect(page.getByRole("heading", { name: /formations/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^formations$/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /nouvelle formation/i })).toBeVisible();
   });
 
@@ -17,32 +28,28 @@ test.describe("Formations", () => {
     await expect(page.getByPlaceholder(/rechercher une formation/i)).toBeVisible();
   });
 
-  test("création d'une nouvelle formation", async ({ page }) => {
+  test("creation d'une nouvelle formation", async ({ page }) => {
     await page.goto("/app/formations/new");
-    await page.getByLabel(/titre/i).fill("Formation Sécurité Incendie");
-    await page.getByLabel(/catégorie/i).fill("Sécurité");
-    await page.getByRole("button", { name: /enregistrer|créer/i }).click();
-    // Should redirect to formation detail or formations list
+    await fillMinimalTraining(page, "Formation Securite Incendie");
+    await page.getByRole("button", { name: /enregistrer|creer|créer/i }).click();
     await expect(page).not.toHaveURL(/\/new/);
   });
 
   test("la recherche filtre les formations", async ({ page }) => {
-    // Create a formation first
     await page.goto("/app/formations/new");
-    await page.getByLabel(/titre/i).fill("Formation Test Recherche ABC");
-    await page.getByRole("button", { name: /enregistrer|créer/i }).click();
+    await fillMinimalTraining(page, "Formation Test Recherche ABC");
+    await page.getByRole("button", { name: /enregistrer|creer|créer/i }).click();
 
-    // Search for it
     await page.goto("/app/formations");
     await page.getByPlaceholder(/rechercher une formation/i).fill("Test Recherche ABC");
     await page.getByRole("button", { name: /filtrer/i }).click();
-    await expect(page.getByText("Formation Test Recherche ABC")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Formation Test Recherche ABC/i })).toBeVisible();
   });
 
-  test("la recherche sans résultat affiche un état vide", async ({ page }) => {
+  test("la recherche sans resultat affiche un etat vide", async ({ page }) => {
     await page.goto("/app/formations?q=xyzinexistant999");
-    await expect(page.getByText(/aucun résultat/i)).toBeVisible();
-    await expect(page.getByText(/effacer les filtres/i)).toBeVisible();
+    await expect(page.getByText(/aucune formation/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: /effacer/i })).toBeVisible();
   });
 
   test("le filtre par statut fonctionne", async ({ page }) => {
@@ -55,6 +62,6 @@ test.describe("Formations", () => {
 
   test("l'import CSV est accessible depuis le menu", async ({ page }) => {
     await page.goto("/app/import");
-    await expect(page.getByRole("heading", { name: /import/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /import csv/i })).toBeVisible();
   });
 });

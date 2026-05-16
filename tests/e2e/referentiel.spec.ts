@@ -1,43 +1,35 @@
 import { expect, test } from "@playwright/test";
 import { seedAndAuthenticate } from "./helpers/auth";
 
-test.describe("Référentiel RNQ", () => {
+test.describe("Referentiel RNQ", () => {
   test.beforeEach(async ({ context }) => {
     await seedAndAuthenticate(context);
   });
 
-  test("la page référentiel s'affiche avec les 7 critères", async ({ page }) => {
+  test("la page referentiel s'affiche avec les 7 criteres", async ({ page }) => {
     await page.goto("/app/referentiel");
-    await expect(page.getByRole("heading", { name: /référentiel/i })).toBeVisible();
-    for (let i = 1; i <= 7; i++) {
-      await expect(page.getByText(new RegExp(`critère ${i}`, "i"))).toBeVisible();
+    await expect(page.getByRole("heading", { name: /referentiel|référentiel/i })).toBeVisible();
+    for (let i = 1; i <= 7; i += 1) {
+      await expect(page.locator(`a[href="/app/referentiel?criterion=${i}"]`).first()).toBeVisible();
     }
   });
 
-  test("les 32 indicateurs sont listés", async ({ page }) => {
+  test("les 32 indicateurs sont listes", async ({ page }) => {
     await page.goto("/app/referentiel");
-    const rows = page.getByRole("row");
-    // Header + at least 30 indicator rows
-    await expect(rows).toHaveCount({ minimum: 30 } as never);
-    // More lenient: just check multiple rows exist
-    const count = await rows.count();
-    expect(count).toBeGreaterThanOrEqual(10);
+    await expect(page.getByText(/32 indicateurs affich/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: /^#1 / })).toBeVisible();
+    await expect(page.getByRole("link", { name: /^#32 / })).toBeVisible();
   });
 
-  test("la recherche par mot-clé filtre les indicateurs", async ({ page }) => {
+  test("la recherche par mot-cle filtre les indicateurs", async ({ page }) => {
     await page.goto("/app/referentiel?q=accessibilit%C3%A9");
     const resultText = await page.textContent("body");
     expect(resultText?.toLowerCase()).toContain("accessibilit");
   });
 
-  test("le filtre par critère fonctionne", async ({ page }) => {
+  test("le filtre par critere fonctionne", async ({ page }) => {
     await page.goto("/app/referentiel?criterion=1");
     await expect(page).toHaveURL(/criterion=1/);
-    // All shown indicators should be from criterion 1
-    const badgeEl = page.getByText(/critère 2|critère 3|critère 4|critère 5|critère 6|critère 7/i).first();
-    await expect(badgeEl).not.toBeVisible().catch(() => {
-      // If it's visible in header cards that's fine — only checking indicator rows
-    });
   });
 
   test("le filtre preuves manquantes fonctionne", async ({ page }) => {
@@ -45,25 +37,22 @@ test.describe("Référentiel RNQ", () => {
     await expect(page).toHaveURL(/missing=1/);
   });
 
-  test("un indicateur est cliquable et ouvre la page détail", async ({ page }) => {
+  test("un indicateur est cliquable et ouvre la page detail", async ({ page }) => {
     await page.goto("/app/referentiel");
-    const firstRow = page.getByRole("row").nth(1);
-    await firstRow.click();
+    await page.getByRole("link", { name: /^#1 / }).click();
     await expect(page).toHaveURL(/\/app\/referentiel\/.+/);
   });
 
-  test("mise à jour du statut d'un indicateur", async ({ page }) => {
+  test("mise a jour du statut d'un indicateur", async ({ page }) => {
     await page.goto("/app/referentiel");
-    const firstRow = page.getByRole("row").nth(1);
-    await firstRow.click();
+    await page.getByRole("link", { name: /^#1 / }).click();
     await expect(page).toHaveURL(/\/app\/referentiel\/.+/);
 
-    // Look for a status select or form
     const statusSelect = page.getByLabel(/statut/i).first();
     if (await statusSelect.isVisible()) {
       await statusSelect.selectOption("IN_PROGRESS");
       await page.getByRole("button", { name: /enregistrer|sauvegarder/i }).click();
-      await expect(page.getByText(/en cours|in.progress/i)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(/en cours|in_progress/i).first()).toBeVisible({ timeout: 5000 });
     }
   });
 });

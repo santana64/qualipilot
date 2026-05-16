@@ -6,7 +6,7 @@ import { z } from "zod";
 import { createOpaqueToken, hashToken, isExpired } from "@/domain/auth/tokens";
 import { clearSessionCookie, setSessionCookie } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
-import { EmailError, toPublicError } from "@/lib/errors";
+import { toPublicError } from "@/lib/errors";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { safeRedirectPath } from "@/lib/utils";
 import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail } from "@/lib/email";

@@ -1,6 +1,5 @@
 import { NavSidebar } from "@/components/nav-sidebar";
 import { requireUser } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();

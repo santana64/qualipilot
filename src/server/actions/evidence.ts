@@ -5,7 +5,13 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { toPublicError } from "@/lib/errors";
-import { storeEvidenceFile } from "@/lib/storage";
+import {
+  assertAllowedEvidenceUpload,
+  cleanEvidenceFileName,
+  deleteStoredFile,
+  storeEvidenceFile,
+  toBlobStorageKey,
+} from "@/lib/storage";
 import { getOptionalDate } from "@/lib/utils";
 import { assertValidClientForUser } from "@/server/cabinet";
 import { assertCanCreateEvidence } from "@/server/billing";
@@ -50,6 +56,8 @@ export async function createEvidenceAction(formData: FormData) {
   const returnTo = String(formData.get("returnTo") ?? "/app/preuves");
   let target = returnTo;
   let createdEvidenceId: string | null = null;
+  const uploadedBlobPathname = String(formData.get("uploadedBlobPathname") ?? "").trim();
+  let uploadedStorageKey: string | null = null;
   try {
     await assertCanCreateEvidence(workspace.workspaceUserId);
     const parsed = evidenceSchema.parse(Object.fromEntries(formData));
@@ -78,21 +86,43 @@ export async function createEvidenceAction(formData: FormData) {
       },
     });
     createdEvidenceId = created.id;
-    const file = formData.get("file");
-    if (file instanceof File && file.size > 0) {
-      const stored = await storeEvidenceFile(workspace.workspaceUserId, created.id, file);
-      if (stored) {
-        await prisma.evidence.update({
-          where: { id: created.id },
-          data: {
-            fileUrl: `/app/preuves/files/${created.id}`,
-            fileStorageKey: stored.storageKey,
-            fileName: stored.fileName,
-            fileMimeType: stored.fileMimeType,
-            fileSizeBytes: stored.fileSizeBytes,
-            fileUploadedAt: new Date(),
-          },
-        });
+    if (uploadedBlobPathname) {
+      if (!uploadedBlobPathname.startsWith(`evidence/${workspace.workspaceUserId}/pending/`) || uploadedBlobPathname.includes("..")) {
+        throw new Error("Chemin Blob invalide.");
+      }
+      const uploadedFileName = cleanEvidenceFileName(String(formData.get("uploadedFileName") ?? "preuve"));
+      const uploadedFileMimeType = String(formData.get("uploadedFileMimeType") ?? "application/octet-stream");
+      const uploadedFileSizeBytes = Number(formData.get("uploadedFileSizeBytes") ?? 0);
+      assertAllowedEvidenceUpload({ size: uploadedFileSizeBytes, type: uploadedFileMimeType });
+      uploadedStorageKey = toBlobStorageKey(uploadedBlobPathname);
+      await prisma.evidence.update({
+        where: { id: created.id },
+        data: {
+          fileUrl: `/app/preuves/files/${created.id}`,
+          fileStorageKey: uploadedStorageKey,
+          fileName: uploadedFileName,
+          fileMimeType: uploadedFileMimeType,
+          fileSizeBytes: uploadedFileSizeBytes,
+          fileUploadedAt: new Date(),
+        },
+      });
+    } else {
+      const file = formData.get("file");
+      if (file instanceof File && file.size > 0) {
+        const stored = await storeEvidenceFile(workspace.workspaceUserId, created.id, file);
+        if (stored) {
+          await prisma.evidence.update({
+            where: { id: created.id },
+            data: {
+              fileUrl: `/app/preuves/files/${created.id}`,
+              fileStorageKey: stored.storageKey,
+              fileName: stored.fileName,
+              fileMimeType: stored.fileMimeType,
+              fileSizeBytes: stored.fileSizeBytes,
+              fileUploadedAt: new Date(),
+            },
+          });
+        }
       }
     }
     await scheduleEvidenceExpiryReminder({
@@ -108,6 +138,9 @@ export async function createEvidenceAction(formData: FormData) {
   } catch (error) {
     if (createdEvidenceId) {
       await prisma.evidence.delete({ where: { id: createdEvidenceId } }).catch(() => undefined);
+    }
+    if (uploadedStorageKey) {
+      await deleteStoredFile(uploadedStorageKey).catch(() => undefined);
     }
     target = `${returnTo}${returnTo.includes("?") ? "&" : "?"}error=${encodeURIComponent(toPublicError(error))}`;
   }

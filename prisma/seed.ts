@@ -61,6 +61,7 @@ async function main() {
   if (existing) {
     await prisma.user.delete({ where: { id: existing.id } });
   }
+  await prisma.user.deleteMany({ where: { email: { endsWith: "@benchmark.qualipilot.test" } } });
 
   const passwordHash = await bcrypt.hash("QualiPilotDemo2026!", 12);
   const user = await prisma.user.create({
@@ -357,6 +358,72 @@ async function main() {
       },
     ],
   });
+
+  const peerProfiles = [
+    { email: "benchmark-1@benchmark.qualipilot.test", name: "Pair A", score: 78, missing: 5, overdue: 1 },
+    { email: "benchmark-2@benchmark.qualipilot.test", name: "Pair B", score: 82, missing: 4, overdue: 0 },
+    { email: "benchmark-3@benchmark.qualipilot.test", name: "Pair C", score: 74, missing: 7, overdue: 2 },
+    { email: "benchmark-4@benchmark.qualipilot.test", name: "Pair D", score: 88, missing: 2, overdue: 1 },
+  ];
+
+  for (const [peerIndex, peer] of peerProfiles.entries()) {
+    const peerUser = await prisma.user.create({
+      data: {
+        email: peer.email,
+        name: peer.name,
+        passwordHash,
+        emailVerifiedAt: new Date(),
+        organizationProfile: {
+          create: {
+            organizationName: `Organisme benchmark ${peerIndex + 1}`,
+            address: "Adresse anonymisee",
+            postalCode: "75000",
+            city: "Paris",
+            activityTypes: ["training actions", "skills assessment"],
+            qualiopiStatus: "CERTIFIED",
+          },
+        },
+        subscription: { create: { plan: "PRO", status: "active" } },
+      },
+    });
+    await prisma.trainingProgram.createMany({
+      data: [1, 2, 3].map((item) => ({
+        userId: peerUser.id,
+        title: `Formation benchmark ${peerIndex + 1}.${item}`,
+        publicTarget: "Professionnels",
+        objectives: "Objectifs pedagogiques formalises.",
+        duration: "14 heures",
+        modalities: "Presentiel ou distanciel.",
+        teachingMethods: "Ateliers et cas pratiques.",
+        evaluationMethods: "Quiz et mise en situation.",
+        status: "PUBLISHED",
+      })),
+    });
+    await prisma.indicatorProgress.createMany({
+      data: indicators.map((indicator) => {
+        const status = indicator.riskLevel === "CRITICAL" || indicator.number % (peerIndex + 3) !== 0 ? "READY" : "NEEDS_REVIEW";
+        return {
+          userId: peerUser.id,
+          indicatorId: indicator.id,
+          status,
+          readinessScore: status === "READY" ? 85 : 60,
+          lastReviewedAt: new Date("2026-04-30"),
+        };
+      }),
+    });
+    const ready = Math.round((peer.score / 100) * 32);
+    await prisma.readinessSnapshot.create({
+      data: {
+        userId: peerUser.id,
+        globalReadinessScore: peer.score,
+        indicatorsReady: ready,
+        indicatorsIncomplete: 32 - ready,
+        missingEvidenceCount: peer.missing,
+        overdueActionsCount: peer.overdue,
+        capturedAt: new Date("2026-05-10T10:00:00"),
+      },
+    });
+  }
 
   console.log("Seed terminé : demo@qualipilot.fr / QualiPilotDemo2026!");
 }

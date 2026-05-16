@@ -41,12 +41,15 @@ const navGroups = [
       { href: "/app/actions", label: "Plan d'actions", icon: ListChecks },
       { href: "/app/documents", label: "Documents", icon: FileText },
       { href: "/app/assistant", label: "Assistant IA", icon: Sparkles },
+      { href: "/app/assistant/simulate", label: "Simulation audit", icon: ShieldCheck },
     ],
   },
   {
     label: "Audit",
     items: [
       { href: "/app/audit", label: "Cockpit audit", icon: ShieldCheck },
+      { href: "/app/veille", label: "Veille RNQ", icon: Bell },
+      { href: "/app/benchmark", label: "Benchmark", icon: LineChart },
     ],
   },
   {

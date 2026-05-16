@@ -1,11 +1,14 @@
-import { Archive, FolderOpen } from "lucide-react";
+import { Archive, FolderOpen, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { EvidenceCreateForm } from "@/components/evidence-create-form";
 import { Badge, Disclaimer, EmptyState, Field, Notice, PageHeader, SectionCard, SubmitButton, inputClass, textareaClass } from "@/components/ui";
 import { formatFrenchDate } from "@/domain/formatting";
 import { requireUser } from "@/lib/auth/session";
 import { evidenceStatusLabels, evidenceTypeLabels } from "@/lib/labels";
+import { isVercelBlobConfigured } from "@/lib/storage";
 import { getWorkspaceData } from "@/server/app-data";
+import { analyzeEvidenceWithAiAction } from "@/server/actions/intelligence";
 import { archiveEvidenceAction, createEvidenceAction } from "@/server/actions/evidence";
 
 function statusTone(status: string): "green" | "amber" | "red" | "slate" {
@@ -35,6 +38,8 @@ export default async function EvidencePage({
   });
   const totalPages = Math.max(1, Math.ceil(evidences.length / pageSize));
   const pageItems = evidences.slice((page - 1) * pageSize, page * pageSize);
+  const blobConfigured = isVercelBlobConfigured();
+  const persistentStorageMissing = Boolean(process.env.VERCEL && !blobConfigured);
 
   return (
     <main className="grid gap-8">
@@ -44,6 +49,12 @@ export default async function EvidencePage({
       />
       <Notice message={params.error} type="error" />
       <Notice message={params.success} type="success" />
+      {persistentStorageMissing ? (
+        <Notice
+          type="error"
+          message="Stockage de fichiers non configure en production : ajoutez BLOB_READ_WRITE_TOKEN pour activer Vercel Blob."
+        />
+      ) : null}
 
       {/* Expired banner */}
       {data.expiredEvidence.length > 0 ? (
@@ -54,9 +65,27 @@ export default async function EvidencePage({
 
       <section className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         {/* Add evidence form */}
+        {blobConfigured ? (
+          <EvidenceCreateForm
+            action={createEvidenceAction}
+            clients={data.cabinetClients}
+            indicators={data.indicatorRows.map((indicator) => ({
+              id: indicator.id,
+              number: indicator.number,
+              title: indicator.title,
+            }))}
+            trainingPrograms={data.trainingPrograms.map((program) => ({
+              id: program.id,
+              title: program.title,
+            }))}
+            defaultClientId={clientId}
+            useBlobUpload
+            uploadPrefix={`evidence/${data.workspace.workspaceUserId}/pending`}
+          />
+        ) : (
         <SectionCard>
           <h2 className="mb-5 font-bold text-slate-900">Ajouter une preuve</h2>
-          <form action={createEvidenceAction} encType="multipart/form-data" className="grid gap-4">
+          <form action={createEvidenceAction} className="grid gap-4">
             <input type="hidden" name="returnTo" value={clientId ? `/app/preuves?clientId=${clientId}` : "/app/preuves"} />
             <Field label="Titre" required>
               <input className={inputClass} name="title" required placeholder="Ex. : Procédure accueil apprenant" />
@@ -136,6 +165,7 @@ export default async function EvidencePage({
             <SubmitButton>Ajouter la preuve</SubmitButton>
           </form>
         </SectionCard>
+        )}
 
         {/* Evidence list */}
         <section className="grid gap-4 content-start">
@@ -214,6 +244,17 @@ export default async function EvidencePage({
                   <Badge key={link.id}>{link.trainingProgram.title}</Badge>
                 ))}
               </div>
+              {evidence.aiAnalyses[0] ? (
+                <div className="mt-4 rounded-lg border border-violet-200 bg-violet-50 p-3">
+                  <p className="text-sm font-bold text-violet-950">Analyse IA preuve</p>
+                  <p className="mt-1 text-sm leading-6 text-violet-800">{evidence.aiAnalyses[0].summary}</p>
+                  {evidence.aiAnalyses[0].recommendedIndicatorNumbers.length > 0 ? (
+                    <p className="mt-2 text-xs font-semibold text-violet-700">
+                      Indicateurs proposes : {evidence.aiAnalyses[0].recommendedIndicatorNumbers.join(", ")}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 {evidence.fileUrl ? (
                   <a className="text-sm font-semibold text-brand hover:underline" href={evidence.fileUrl}>
@@ -230,6 +271,16 @@ export default async function EvidencePage({
                     URL externe ↗
                   </a>
                 ) : null}
+                <form action={analyzeEvidenceWithAiAction}>
+                  <input type="hidden" name="evidenceId" value={evidence.id} />
+                  <button
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-50"
+                    type="submit"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Analyser IA
+                  </button>
+                </form>
                 <form action={archiveEvidenceAction} className="ml-auto">
                   <input type="hidden" name="id" value={evidence.id} />
                   {clientId ? <input type="hidden" name="clientId" value={clientId} /> : null}

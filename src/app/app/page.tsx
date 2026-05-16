@@ -36,6 +36,8 @@ export default async function DashboardPage() {
       data.organization.activityTypes.length > 0,
   );
   const linkedEvidenceCount = data.evidences.filter((evidence) => evidence.indicatorLinks.length > 0).length;
+  const criticalMissingEvidenceCount = data.missingEvidence.filter((indicator) => indicator.riskLevel === "CRITICAL").length;
+  const highRiskMissingEvidenceCount = data.missingEvidence.filter((indicator) => indicator.riskLevel === "HIGH").length;
 
   return (
     <main className="grid gap-8">
@@ -62,6 +64,42 @@ export default async function DashboardPage() {
           globalReadinessScore: data.globalReadinessScore,
         }}
       />
+
+      {criticalMissingEvidenceCount > 0 || data.overdueActions.length > 0 ? (
+        <section className="rounded-xl border border-rose-200 bg-rose-50 p-5 shadow-card">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-700" />
+              <div>
+                <h2 className="font-bold text-rose-950">Points critiques avant audit</h2>
+                <p className="mt-1 text-sm leading-6 text-rose-800">
+                  {criticalMissingEvidenceCount} indicateur(s) critique(s) sans preuve active,{" "}
+                  {highRiskMissingEvidenceCount} indicateur(s) a risque eleve sans preuve,{" "}
+                  {data.overdueActions.length} action(s) en retard.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/app/referentiel?missing=1"
+              className="inline-flex min-h-9 items-center justify-center rounded-lg bg-rose-800 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-900"
+            >
+              Voir les preuves manquantes
+            </Link>
+          </div>
+        </section>
+      ) : (
+        <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-card">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+            <div>
+              <h2 className="font-bold text-emerald-950">Aucun point critique sans preuve active</h2>
+              <p className="mt-1 text-sm leading-6 text-emerald-800">
+                Les indicateurs critiques sont couverts dans les donnees QualiPilot. Les exigences restent a valider selon votre situation.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── KPI row ── */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">

@@ -39,7 +39,7 @@ export default async function ImportPage({
       <Notice message={params.success} type="success" />
 
       <SectionCard>
-        <form action={importTrainingProgramsCsvAction} encType="multipart/form-data" className="grid gap-4">
+        <form action={importTrainingProgramsCsvAction} className="grid gap-4">
           <Field label="Fichier CSV formations" hint="Encodage UTF-8, premiere ligne avec les en-tetes." required>
             <input className={inputClass} type="file" name="file" accept=".csv,text/csv" required />
           </Field>

@@ -142,6 +142,24 @@ enum TeamMemberStatus {
   DISABLED
 }
 
+enum AiAuditSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum AiAuditVerdict {
+  READY
+  WARNING
+  AT_RISK
+  CRITICAL
+}
+
+enum RnqWatchStatus {
+  NO_CHANGE
+  DETECTED
+  FAILED
+}
+
 model User {
   id                      String                   @id @default(cuid())
   email                   String                   @unique
@@ -167,6 +185,9 @@ model User {
   joinedTeamMemberships   TeamMember[]             @relation("TeamMemberUser")
   readinessSnapshots      ReadinessSnapshot[]
   auditorShareLinks       AuditorShareLink[]
+  aiAuditSessions         AiAuditSession[]
+  evidenceAiAnalyses      EvidenceAiAnalysis[]
+  rnqWatchNotifications   RnqWatchNotification[]
 }
 
 model EmailVerificationToken {
@@ -248,6 +269,7 @@ model RnqIndicator {
   evidenceLinks     EvidenceIndicator[]
   actionPlanItems   ActionPlanItem[]
   generatedDocument GeneratedDocument[]
+  auditSimulationAnswers AiAuditAnswer[]
 }
 
 model IndicatorProgress {
@@ -328,6 +350,7 @@ model Evidence {
   trainingProgramLinks EvidenceTrainingProgram[]
   actionPlanItems      ActionPlanItem[]
   reminders            EmailReminder[]
+  aiAnalyses           EvidenceAiAnalysis[]
 
   @@index([userId])
   @@index([clientId])
@@ -492,6 +515,8 @@ model CabinetClient {
   reminders        EmailReminder[]
   readinessSnapshots ReadinessSnapshot[]
   auditorShareLinks AuditorShareLink[]
+  aiAuditSessions  AiAuditSession[]
+  evidenceAiAnalyses EvidenceAiAnalysis[]
 
   @@index([userId])
 }
@@ -554,4 +579,99 @@ model AuditorShareLink {
 
   @@index([userId])
   @@index([clientId])
+}
+
+model AiAuditSession {
+  id               String               @id @default(cuid())
+  userId           String
+  clientId         String?
+  title            String
+  certifierPersona String
+  status           AiAuditSessionStatus @default(IN_PROGRESS)
+  globalScore      Int                  @default(0)
+  verdict          AiAuditVerdict?
+  reportText       String?
+  reportHtml       String?
+  completedAt      DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client           CabinetClient?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  answers          AiAuditAnswer[]
+
+  @@index([userId, createdAt])
+  @@index([clientId, createdAt])
+}
+
+model AiAuditAnswer {
+  id               String         @id @default(cuid())
+  sessionId        String
+  indicatorId      String
+  question         String
+  answerText       String?
+  evaluationScore  Int?
+  verdict          AiAuditVerdict?
+  gaps             String[]
+  recommendations  String[]
+  expectedEvidence String[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  session          AiAuditSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  indicator        RnqIndicator   @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, indicatorId])
+  @@index([indicatorId])
+}
+
+model EvidenceAiAnalysis {
+  id                          String         @id @default(cuid())
+  userId                      String
+  clientId                    String?
+  evidenceId                  String
+  summary                     String
+  confidenceScore             Int
+  recommendedIndicatorNumbers Int[]
+  linkedIndicatorNumbers      Int[]
+  gaps                        String[]
+  rawResultJson               Json
+  createdAt                   DateTime       @default(now())
+  user                        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client                      CabinetClient? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  evidence                    Evidence       @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([clientId, createdAt])
+  @@index([evidenceId, createdAt])
+}
+
+model RnqWatchEvent {
+  id                       String                 @id @default(cuid())
+  sourceUrl                String
+  sourceTitle              String
+  contentHash              String                 @unique
+  detectedVersion          String?
+  summary                  String
+  impactedIndicatorNumbers Int[]
+  rawResultJson            Json?
+  status                   RnqWatchStatus
+  createdAt                DateTime               @default(now())
+  notifications            RnqWatchNotification[]
+
+  @@index([sourceUrl, createdAt])
+  @@index([status, createdAt])
+}
+
+model RnqWatchNotification {
+  id        String        @id @default(cuid())
+  eventId   String
+  userId    String
+  status    String        @default("PENDING")
+  sentAt    DateTime?
+  lastError String?
+  createdAt DateTime      @default(now())
+  event     RnqWatchEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([userId, createdAt])
 }

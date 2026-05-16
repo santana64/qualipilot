@@ -8,18 +8,18 @@ test.describe("Cockpit Audit", () => {
 
   test("la page audit s'affiche", async ({ page }) => {
     await page.goto("/app/audit");
-    await expect(page.getByRole("heading", { name: /audit/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^cockpit audit$/i })).toBeVisible();
   });
 
-  test("la page d'export audit s'affiche et contient les sections clés", async ({ page }) => {
+  test("la page d'export audit affiche les sections cles", async ({ page }) => {
     await page.goto("/app/audit/export");
-    await expect(page.getByText(/organisme|organisation/i)).toBeVisible();
-    await expect(page.getByText(/score|préparation/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /profil organisme/i })).toBeVisible();
+    await expect(page.getByText(/score|preparation|préparation/i).first()).toBeVisible();
   });
 
-  test("le téléchargement PDF du dossier audit fonctionne", async ({ page }) => {
+  test("le telechargement PDF du dossier audit fonctionne", async ({ page }) => {
     await page.goto("/app/audit/export");
-    const pdfBtn = page.getByRole("link", { name: /pdf|télécharger/i }).first();
+    const pdfBtn = page.getByRole("link", { name: /pdf|telecharger|télécharger/i }).first();
     if (await pdfBtn.isVisible()) {
       const [download] = await Promise.all([
         page.waitForEvent("download"),
@@ -34,7 +34,7 @@ test.describe("Cockpit Audit", () => {
     const shareBtn = page.getByRole("button", { name: /partager|lien auditeur/i });
     if (await shareBtn.isVisible()) {
       await shareBtn.click();
-      await expect(page.getByText(/lien|partage/i)).toBeVisible();
+      await expect(page.getByText(/lien|partage/i).first()).toBeVisible();
     }
   });
 });
@@ -42,6 +42,6 @@ test.describe("Cockpit Audit", () => {
 test.describe("Lien de partage auditeur public", () => {
   test("un token invalide affiche une erreur", async ({ page }) => {
     await page.goto("/audit-share/tokenInvalide123");
-    await expect(page.getByText(/invalide|introuvable|expir[eé]/i)).toBeVisible();
+    await expect(page.getByText(/invalide|introuvable|expire|expiré/i)).toBeVisible();
   });
 });

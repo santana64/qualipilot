@@ -83,6 +83,23 @@ function buildEmailHtml(bodyHtml: string, footerExtra?: string): string {
 </html>`;
 }
 
+function normalizeEmailEncoding(value: string): string {
+  return value
+    .replaceAll("\u00c3\u00a0", "a")
+    .replaceAll("\u00c3\u00a2", "a")
+    .replaceAll("\u00c3\u00a7", "c")
+    .replaceAll("\u00c3\u00a8", "e")
+    .replaceAll("\u00c3\u00a9", "e")
+    .replaceAll("\u00c3\u00aa", "e")
+    .replaceAll("\u00c3\u00ae", "i")
+    .replaceAll("\u00c3\u00b4", "o")
+    .replaceAll("\u00c3\u00b9", "u")
+    .replaceAll("\u00c3\u00bb", "u")
+    .replaceAll("\u00e2\u20ac\u201d", "-")
+    .replaceAll("\u00e2\u20ac\u2122", "'")
+    .replaceAll("\u00e2\u20ac\u00a2", "-");
+}
+
 export function isEmailConfigured(): boolean {
   return Boolean(
     process.env.RESEND_API_KEY ||
@@ -91,17 +108,24 @@ export function isEmailConfigured(): boolean {
 }
 
 export async function sendEmail(payload: EmailPayload) {
+  const normalizedPayload = {
+    ...payload,
+    subject: normalizeEmailEncoding(payload.subject),
+    html: normalizeEmailEncoding(payload.html),
+    text: normalizeEmailEncoding(payload.text),
+  };
+
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: getFromAddress(),
-      to: payload.to,
-      subject: payload.subject,
-      html: payload.html,
-      text: payload.text,
-      headers: payload.unsubscribeUrl
+      to: normalizedPayload.to,
+      subject: normalizedPayload.subject,
+      html: normalizedPayload.html,
+      text: normalizedPayload.text,
+      headers: normalizedPayload.unsubscribeUrl
         ? {
-            "List-Unsubscribe": `<${payload.unsubscribeUrl}>`,
+            "List-Unsubscribe": `<${normalizedPayload.unsubscribeUrl}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           }
         : undefined,
@@ -121,13 +145,13 @@ export async function sendEmail(payload: EmailPayload) {
     });
     await transporter.sendMail({
       from: getFromAddress(),
-      to: payload.to,
-      subject: payload.subject,
-      html: payload.html,
-      text: payload.text,
-      headers: payload.unsubscribeUrl
+      to: normalizedPayload.to,
+      subject: normalizedPayload.subject,
+      html: normalizedPayload.html,
+      text: normalizedPayload.text,
+      headers: normalizedPayload.unsubscribeUrl
         ? {
-            "List-Unsubscribe": `<${payload.unsubscribeUrl}>`,
+            "List-Unsubscribe": `<${normalizedPayload.unsubscribeUrl}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           }
         : undefined,

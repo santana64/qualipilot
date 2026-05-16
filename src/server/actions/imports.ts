@@ -28,10 +28,48 @@ const importedTrainingSchema = z.object({
   notes: z.string().trim().optional().default(""),
 });
 
+const HEADER_ALIASES: Record<keyof z.infer<typeof importedTrainingSchema>, string[]> = {
+  title: ["title", "titre", "intitule", "intitulé"],
+  category: ["category", "categorie", "catégorie"],
+  publicTarget: ["publicTarget", "publicCible", "public cible", "public", "publicVise", "public visé"],
+  prerequisites: ["prerequisites", "prerequis", "prérequis"],
+  objectives: ["objectives", "objectifs"],
+  duration: ["duration", "duree", "durée"],
+  accessDelay: ["accessDelay", "delaiAcces", "délai accès", "delai d'acces"],
+  price: ["price", "prix", "prixEuros", "prix euros"],
+  modalities: ["modalities", "modalite", "modalités", "modalites", "lieu"],
+  teachingMethods: ["teachingMethods", "methodesPedagogiques", "méthodes pédagogiques", "methodes pedagogiques"],
+  evaluationMethods: ["evaluationMethods", "methodesEvaluation", "méthodes évaluation", "methodes evaluation", "evaluation"],
+  accessibilityInfo: ["accessibilityInfo", "accessibilite", "accessibilité", "handicap"],
+  contactInfo: ["contactInfo", "contact"],
+  resultIndicators: ["resultIndicators", "indicateursResultats", "indicateurs résultats", "resultats"],
+  notes: ["notes", "commentaires"],
+};
+
 function parsePriceCents(value?: string) {
   if (!value) return null;
   const euros = Number(value.replace(",", "."));
   return Number.isFinite(euros) ? Math.round(euros * 100) : null;
+}
+
+function readAliasedValue(row: Record<string, string>, aliases: string[]) {
+  const entries = Object.entries(row);
+  for (const alias of aliases) {
+    const found = entries.find(([key]) => key.trim().toLowerCase() === alias.toLowerCase());
+    if (found) return found[1];
+  }
+  return "";
+}
+
+function normalizeImportedRow(row: Record<string, string>) {
+  const normalized = Object.fromEntries(
+    Object.entries(HEADER_ALIASES).map(([targetKey, aliases]) => [targetKey, readAliasedValue(row, aliases)]),
+  ) as Record<keyof z.infer<typeof importedTrainingSchema>, string>;
+
+  normalized.teachingMethods ||= "Methodes pedagogiques a completer apres import";
+  normalized.evaluationMethods ||= "Methodes d'evaluation a completer apres import";
+  normalized.modalities ||= "Modalites a completer apres import";
+  return normalized;
 }
 
 export async function importTrainingProgramsCsvAction(formData: FormData) {
@@ -42,6 +80,12 @@ export async function importTrainingProgramsCsvAction(formData: FormData) {
     const file = formData.get("file");
     if (!(file instanceof File) || file.size === 0) {
       throw new DomainError("Fichier CSV introuvable.");
+    }
+    const isCsv =
+      file.name.toLowerCase().endsWith(".csv") ||
+      ["text/csv", "application/csv", "application/vnd.ms-excel", "text/plain"].includes(file.type);
+    if (!isCsv) {
+      throw new DomainError("Format invalide : importez un fichier CSV.");
     }
     if (file.size > 1024 * 1024) {
       throw new DomainError("CSV trop volumineux. Limite actuelle : 1 Mo.");
@@ -66,7 +110,7 @@ export async function importTrainingProgramsCsvAction(formData: FormData) {
       throw new BillingError("Votre offre actuelle ne permet pas d'importer autant de formations.");
     }
 
-    const parsedRows = rows.map((row) => importedTrainingSchema.parse(row));
+    const parsedRows = rows.map((row) => importedTrainingSchema.parse(normalizeImportedRow(row)));
     await prisma.trainingProgram.createMany({
       data: parsedRows.map((row) => ({
         userId: workspace.workspaceUserId,

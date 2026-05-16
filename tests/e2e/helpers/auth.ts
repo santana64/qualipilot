@@ -2,11 +2,19 @@ import type { BrowserContext, Page } from "@playwright/test";
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000";
 
-export async function seedAndAuthenticate(context: BrowserContext): Promise<{
+export async function seedAndAuthenticate(
+  context: BrowserContext,
+  options?: { email?: string; plan?: "FREE" | "STARTER" | "PRO" | "CABINET" },
+): Promise<{
   email: string;
   password: string;
 }> {
-  const response = await context.request.post(`${BASE_URL}/api/test/seed`);
+  await context.addInitScript(() => {
+    window.localStorage.setItem("qualipilot_cookie_consent", "accepted");
+  });
+  const response = await context.request.post(`${BASE_URL}/api/test/seed`, {
+    data: options ?? {},
+  });
   if (!response.ok()) {
     throw new Error(`Seed failed: ${response.status()} ${await response.text()}`);
   }
@@ -18,7 +26,7 @@ export async function seedAndAuthenticate(context: BrowserContext): Promise<{
 export async function loginAs(page: Page, email: string, password: string) {
   await page.goto("/login");
   await page.getByLabel(/email/i).fill(email);
-  await page.getByLabel(/mot de passe/i).fill(password);
+  await page.locator('input[name="password"]').fill(password);
   await page.getByRole("button", { name: /se connecter/i }).click();
   await page.waitForURL(/\/app/);
 }

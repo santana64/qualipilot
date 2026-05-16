@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck, Lock, CreditCard, Zap } from "lucide-react";
+import { Lock, CreditCard, Zap } from "lucide-react";
 import { AuthCard } from "@/components/auth-card";
 import { PasswordInput } from "@/components/password-input";
 import { Field, SubmitButton, inputClass } from "@/components/ui";

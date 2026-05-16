@@ -7,6 +7,10 @@
     {
       "path": "/api/reminders/run",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/rnq-watch/run",
+      "schedule": "30 7 * * 1"
     }
   ]
 }
