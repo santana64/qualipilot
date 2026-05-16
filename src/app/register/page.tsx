@@ -24,7 +24,7 @@ export default async function RegisterPage({
       error={params.error}
     >
       <form action={registerAction} className="grid gap-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Votre prénom">
             <input
               className={inputClass}
