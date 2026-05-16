@@ -20,7 +20,7 @@ export function escapeHtml(value: string): string {
 }
 
 function getFromAddress() {
-  return process.env.EMAIL_FROM || "QualiPilot <no-reply@qualipilot.fr>";
+  return process.env.EMAIL_FROM || "QualiPilot <no-reply@qualipilot.pro>";
 }
 
 function getAppUrl() {

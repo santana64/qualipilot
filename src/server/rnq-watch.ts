@@ -34,7 +34,7 @@ async function fetchRnqSource() {
   const sourceUrl = getSourceUrl();
   const response = await fetch(sourceUrl, {
     headers: {
-      "User-Agent": "QualiPilot RNQ watch (+https://qualipilot.fr)",
+      "User-Agent": "QualiPilot RNQ watch (+https://qualipilot.pro)",
     },
     cache: "no-store",
   });

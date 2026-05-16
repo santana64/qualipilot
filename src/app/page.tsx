@@ -392,7 +392,7 @@ export default function Home() {
                 <p className="text-sm font-semibold text-foreground">Pack Audit ponctuel — 149 €</p>
                 <p className="mt-1 text-sm text-foreground-muted">Accompagnement sur mesure pour la préparation d'un audit. Contactez-nous.</p>
               </div>
-              <a href="mailto:contact@qualipilot.fr?subject=Pack%20Audit%20QualiPilot"
+              <a href="mailto:contact@qualipilot.pro?subject=Pack%20Audit%20QualiPilot"
                 className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground hover:bg-surface-subtle transition-colors md:mt-0">
                 Demander un accès
               </a>
