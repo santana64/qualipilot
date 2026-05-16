@@ -19,7 +19,10 @@ export type StoredEvidenceFile = {
 };
 
 export function getStorageRoot() {
-  return process.env.LOCAL_FILE_STORAGE_DIR ? path.resolve(process.env.LOCAL_FILE_STORAGE_DIR) : path.resolve(".storage");
+  if (process.env.LOCAL_FILE_STORAGE_DIR) return path.resolve(process.env.LOCAL_FILE_STORAGE_DIR);
+  // Vercel's /var/task is read-only — /tmp is the only writable dir (ephemeral per invocation)
+  if (process.env.VERCEL) return "/tmp/.storage";
+  return path.resolve(".storage");
 }
 
 function cleanFileName(fileName: string) {
