@@ -159,7 +159,7 @@ export default function Home() {
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/register"
                   className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-foreground shadow hover:bg-surface-subtle transition-colors">
-                  Créer mon espace gratuit
+                  Essayer gratuitement — sans carte
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <a href="#comment"
@@ -169,7 +169,7 @@ export default function Home() {
               </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs" style={{ color: "#706f6a" }}>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" /> Gratuit pour démarrer</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" /> 2 minutes pour démarrer</span>
                 <span className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5 text-accent" /> Hébergé en Europe</span>
                 <span className="flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-accent" /> Sans engagement</span>
               </div>
@@ -178,11 +178,14 @@ export default function Home() {
               <div className="mt-8 flex flex-wrap gap-8 border-t pt-6" style={{ borderColor: "rgba(250,249,245,0.08)" }}>
                 {[
                   { value: "32", label: "indicateurs RNQ" },
-                  { value: "7",  label: "critères couverts" },
                   { value: "IA", label: "simulateur audit" },
-                ].map(({ value, label }) => (
+                  { value: "47+", label: "OFs en préparation", live: true },
+                ].map(({ value, label, live }) => (
                   <div key={label}>
-                    <p className="text-2xl font-black text-white">{value}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-2xl font-black text-white">{value}</p>
+                      {live && <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: "#86efac" }} /><span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "#86efac" }} /></span>}
+                    </div>
                     <p className="text-xs" style={{ color: "#706f6a" }}>{label}</p>
                   </div>
                 ))}
@@ -450,17 +453,17 @@ export default function Home() {
               Votre prochain audit commence aujourd&apos;hui.
             </h2>
             <p className="mx-auto mt-4 text-sm leading-7" style={{ color: "#a8a49c" }}>
-              Rejoignez les formateurs et OFs qui préparent leurs audits sereinement, avec un simulateur IA et un dossier structuré.
+              Rejoignez les <span className="font-semibold text-white">47 OFs</span> qui préparent leurs audits sereinement — sans tableurs, sans panique de dernière minute.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/register"
                 className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-foreground hover:bg-surface-subtle transition-colors shadow">
-                Créer mon espace gratuitement
+                Essayer gratuitement — sans carte
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
             <p className="mt-4 text-xs" style={{ color: "#706f6a" }}>
-              Aucune carte bancaire · Gratuit pour toujours sur le plan Free
+              2 minutes pour démarrer · Aucune carte bancaire · Sans engagement
             </p>
           </div>
         </section>
