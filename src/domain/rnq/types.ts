@@ -31,7 +31,7 @@ export type IndicatorProgressLike = {
   indicatorId?: string;
   indicatorNumber?: number;
   status: IndicatorStatus;
-  readinessScore?: number;
+  readinessScore?: number | null;
   notes?: string | null;
 };
 

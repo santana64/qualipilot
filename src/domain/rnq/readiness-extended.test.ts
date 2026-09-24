@@ -107,7 +107,6 @@ describe("calculateIndicatorReadiness", () => {
   });
 
   it("caps score at 50 when a HIGH priority action is overdue", () => {
-    const now = new Date("2026-06-01");
     const overdueHighAction = {
       id: "a1",
       title: "Action critique",

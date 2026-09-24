@@ -35,7 +35,7 @@ function asDate(value?: Date | string | null): Date | null {
   return value instanceof Date ? value : new Date(value);
 }
 
-export function isOverdue(action: ActionLike, currentDate = new Date()): boolean {
+export function isOverdue(action: Pick<ActionLike, "dueDate" | "status">, currentDate = new Date()): boolean {
   const dueDate = asDate(action.dueDate);
   return Boolean(dueDate && dueDate < currentDate && action.status !== "DONE" && action.status !== "CANCELLED");
 }
